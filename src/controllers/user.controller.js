@@ -21,14 +21,22 @@ const registerUser = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(400, "All fields are required");
   }
-  const exitUser = User.findOne({
+  const exitUser = await User.findOne({
     $or: [{ username }, { email }],
   });
   if (exitUser) {
     throw new ApiError(409, "User already exits with this email or userName");
   }
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  }
+  // console.log(req.files);
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar is required");
   }
@@ -36,7 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    throw new ApiError(400, "Avater is required");
+    throw new ApiError(400, "Avatar is required");
   }
 
   const user = await User.create({
@@ -51,7 +59,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const createdUser = await User.findById(user?._id).select(
     "-password -refreshToken"
   );
-
+  console.log(createdUser);
   if (!createdUser) {
     throw new ApiError(500, "Something went while register user");
   }
