@@ -220,7 +220,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password Change successfully"));
 });
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  console.log("Update User Details is hitting");
+  // console.log("Update User Details is hitting");
   const { email, fullName } = req.body;
   if (!(email || fullName)) {
     throw new ApiError(401, "Please send email or full name");
@@ -246,6 +246,35 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Information updated successfully"));
 });
+const updateAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+  console.log("local file path", avatarLocalPath);
+  if (!avatarLocalPath) {
+    throw new ApiError(401, "Avater file is missing");
+  }
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  // console.log("cloudaniry response", avatar, avatar.url);
+  if (!avatar?.url) {
+    throw new ApiError(400, "Error while uploading on cloadinary");
+  }
+
+  // console.log("hitting inside");
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password -refreshToken");
+  console.log(user);
+  return res.status(200).json(200, user, "Avatar updated sccessfully");
+});
+
 export {
   registerUser,
   loginUser,
@@ -254,4 +283,5 @@ export {
   getCurrentUser,
   changeCurrentPassword,
   updateAccountDetails,
+  updateAvatar,
 };
