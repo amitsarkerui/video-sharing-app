@@ -183,7 +183,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: true,
     };
-    res
+    return res
       .status(200)
       .cookie("accessToken", accessToken)
       .cookie("refreshToken", refreshToken)
@@ -198,5 +198,60 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
+const getCurrentUser = asyncHandler(async (req, res) => {
+  // console.log("Get Current user hitting");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "User fetched successfully"));
+});
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  // console.log("Change password is hitting");
+  const { oldPassword, currentPassword } = req.body;
+  const user = await User.findById(req.user?._id);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+  // console.log(isPasswordCorrect);
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid old password");
+  }
+  user.password = currentPassword;
+  await user.save({ validateBeforeSave: false });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password Change successfully"));
+});
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  console.log("Update User Details is hitting");
+  const { email, fullName } = req.body;
+  if (!(email || fullName)) {
+    throw new ApiError(401, "Please send email or full name");
+  }
+  if (email !== "") {
+    const isEmailExist = await User.findOne({ email: email });
+    if (isEmailExist) {
+      throw new ApiError(401, "Email already exists");
+    }
+  }
+  const updatedField = {};
+  if (email) updatedField.email = email;
+  if (fullName) updatedField.fullName = fullName;
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: updatedField,
+    },
+    { new: true }
+  ).select("-password -refreshToken");
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Information updated successfully"));
+});
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  getCurrentUser,
+  changeCurrentPassword,
+  updateAccountDetails,
+};
