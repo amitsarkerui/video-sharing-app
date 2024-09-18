@@ -107,4 +107,20 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, fetchedVideos, "Video fetched Successfully"));
 });
-export { publishVideo, getAllVideos };
+const getVideoById = asyncHandler(async (req, res) => {
+  console.log("Get video by Id is hitting");
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(401, "Video Id is missing");
+  }
+  const fetchedVideo = await Video.findById(videoId);
+  if (!fetchedVideo) {
+    throw new ApiError(401, "Video does not exists");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, fetchedVideo, "Video fetch by Id is successful")
+    );
+});
+export { publishVideo, getAllVideos, getVideoById };
