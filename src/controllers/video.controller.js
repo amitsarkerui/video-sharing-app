@@ -108,7 +108,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, fetchedVideos, "Video fetched Successfully"));
 });
 const getVideoById = asyncHandler(async (req, res) => {
-  console.log("Get video by Id is hitting");
+  // console.log("Get video by Id is hitting");
   const { videoId } = req.params;
   if (!videoId) {
     throw new ApiError(401, "Video Id is missing");
@@ -123,4 +123,54 @@ const getVideoById = asyncHandler(async (req, res) => {
       new ApiResponse(200, fetchedVideo, "Video fetch by Id is successful")
     );
 });
-export { publishVideo, getAllVideos, getVideoById };
+const updateVideo = asyncHandler(async (req, res) => {
+  console.log("Update video is hitting");
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+  const thumbnailLocalPath = req.file?.path;
+  if (!videoId) {
+    throw new ApiError(401, "Video Id is required for updating video");
+  }
+  if (!(title || description || thumbnailLocalPath)) {
+    throw new ApiError(
+      401,
+      "Title , description or thumbnail any one is required "
+    );
+  }
+  const updateFields = {};
+  if (title) {
+    updateFields.title = title;
+  }
+  if (description) {
+    updateFields.description = description;
+  }
+  if (thumbnailLocalPath) {
+    const updateThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    if (!updateThumbnail) {
+      throw new ApiError(500, "Cloudanry error while updating thumbnail");
+    }
+    updateFields.thumbnail = updateThumbnail?.url;
+  }
+  console.log(updateFields);
+  const updateInstance = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: updateFields,
+    },
+    {
+      new: true,
+    }
+  );
+  console.log("Update Instance", updateInstance);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updateInstance,
+        "Video details is updated successfully"
+      )
+    );
+});
+
+export { publishVideo, getAllVideos, getVideoById, updateVideo };
