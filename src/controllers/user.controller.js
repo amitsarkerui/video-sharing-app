@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -248,7 +249,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 const updateAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
-  console.log("local file path", avatarLocalPath);
+  // console.log("local file path", avatarLocalPath);
   if (!avatarLocalPath) {
     throw new ApiError(401, "Avater file is missing");
   }
@@ -307,6 +308,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Cover Image updated sccessfully"));
 });
 const getUserChannelProfile = asyncHandler(async (req, res) => {
+  // console.log("channel is hitting");
   const { username } = req.params;
   if (!username.trim().toLowerCase()) {
     throw new ApiError(401, "User Name is missing");
@@ -333,14 +335,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        subscribersCount: {
-          $size: "$subscriptions",
-        },
+        subscribersCount: { $size: { $ifNull: ["$subscriptions", []] } },
         channelsSubscribedToCount: {
-          $size: "$subscribedTo",
+          $size: { $ifNull: ["$subscribedTo", []] },
         },
         isSubscribed: {
-          cond: {
+          $cond: {
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
@@ -364,6 +364,62 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   if (!channel.length) {
     throw new ApiError(404, "Channel dose not exits");
   }
+  // console.log(channel);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "Channel fetched successfully"));
+});
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user?._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    avatar: 1,
+                    fullName: 1,
+                    username: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "Watch History fetched successfully"
+      )
+    );
 });
 export {
   registerUser,
@@ -376,4 +432,5 @@ export {
   updateAvatar,
   updateCoverImage,
   getUserChannelProfile,
+  getWatchHistory,
 };
