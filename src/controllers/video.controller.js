@@ -189,5 +189,37 @@ const deleteVideo = asyncHandler(async (req, res) => {
       new ApiResponse(200, deleteVideoInstance, "Video deleted successfully")
     );
 });
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(401, "Video id is required");
+  }
+  const videoDetails = await Video.findById(videoId);
+  console.log(req.user?._id);
+  console.log(videoDetails.owner, Video.owner);
 
-export { publishVideo, getAllVideos, getVideoById, updateVideo, deleteVideo };
+  if (req.user?._id.toString() !== videoDetails.owner.toString()) {
+    throw new ApiError(401, "Unauthorized request by user");
+  }
+  const isPublished = !videoDetails.isPublished;
+  const toggledVideo = await Video.findByIdAndUpdate(videoId, {
+    $set: {
+      isPublished: isPublished,
+    },
+  });
+  if (!toggledVideo) {
+    throw new ApiError(401, "Video don't exits");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, toggledVideo, "Toggled successfully"));
+});
+
+export {
+  publishVideo,
+  getAllVideos,
+  getVideoById,
+  updateVideo,
+  deleteVideo,
+  togglePublishStatus,
+};

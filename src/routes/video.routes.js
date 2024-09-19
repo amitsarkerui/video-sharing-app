@@ -6,6 +6,7 @@ import {
   getAllVideos,
   getVideoById,
   publishVideo,
+  togglePublishStatus,
   updateVideo,
 } from "../controllers/video.controller.js";
 
@@ -34,5 +35,6 @@ router
   .get(getVideoById)
   .patch(upload.single("thumbnail"), updateVideo)
   .delete(deleteVideo);
+router.route("/toggle/:videoId").patch(togglePublishStatus);
 
 export default router;
