@@ -2,6 +2,7 @@ import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middlewire.js";
 import {
+  deleteVideo,
   getAllVideos,
   getVideoById,
   publishVideo,
@@ -13,7 +14,6 @@ router.use(verifyJWT);
 // console.log("Video routes hitting");
 
 router.route("/").get(getAllVideos);
-router.route("/:videoId").get(getVideoById);
 
 router.route("/upload-video").post(
   upload.fields([
@@ -30,7 +30,9 @@ router.route("/upload-video").post(
 );
 
 router
-  .route("/update-details/:videoId")
-  .patch(upload.single("thumbnail"), updateVideo);
+  .route("/:videoId")
+  .get(getVideoById)
+  .patch(upload.single("thumbnail"), updateVideo)
+  .delete(deleteVideo);
 
 export default router;

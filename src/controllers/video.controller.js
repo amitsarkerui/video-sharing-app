@@ -172,5 +172,22 @@ const updateVideo = asyncHandler(async (req, res) => {
       )
     );
 });
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  // console.log("Delete Video is hitting", videoId);
+  if (!videoId) {
+    throw new ApiError(401, "Video Id is required");
+  }
+  const deleteVideoInstance = await Video.findByIdAndDelete(videoId);
+  if (!deleteVideoInstance) {
+    throw new ApiError(400, "Video does not exits");
+  }
+  // console.log(deleteVideoInstance);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, deleteVideoInstance, "Video deleted successfully")
+    );
+});
 
-export { publishVideo, getAllVideos, getVideoById, updateVideo };
+export { publishVideo, getAllVideos, getVideoById, updateVideo, deleteVideo };
