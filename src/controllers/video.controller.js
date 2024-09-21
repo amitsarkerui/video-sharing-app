@@ -5,6 +5,20 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+const isUserAuthorized = async (videoId, userId) => {
+  // console.log("isAuthorized Hitting");
+  if (!videoId) {
+    throw new ApiError(401, "Video Id is required");
+  }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(401, "Video doesn't exits");
+  }
+  if (userId.toString() !== video?.owner.toString()) {
+    throw new ApiError(401, "Unauthorized user operation request");
+  }
+  return true;
+};
 const publishVideo = asyncHandler(async (req, res) => {
   // console.log("publish video is hitting");
   const { title, description } = req.body;
@@ -124,13 +138,14 @@ const getVideoById = asyncHandler(async (req, res) => {
     );
 });
 const updateVideo = asyncHandler(async (req, res) => {
-  console.log("Update video is hitting");
+  // console.log("Update video is hitting");
   const { videoId } = req.params;
   const { title, description } = req.body;
   const thumbnailLocalPath = req.file?.path;
   if (!videoId) {
     throw new ApiError(401, "Video Id is required for updating video");
   }
+  await isUserAuthorized(videoId, req.user?._id);
   if (!(title || description || thumbnailLocalPath)) {
     throw new ApiError(
       401,
@@ -174,10 +189,10 @@ const updateVideo = asyncHandler(async (req, res) => {
 });
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  // console.log("Delete Video is hitting", videoId);
   if (!videoId) {
     throw new ApiError(401, "Video Id is required");
   }
+  await isUserAuthorized(videoId, req.user?._id);
   const deleteVideoInstance = await Video.findByIdAndDelete(videoId);
   if (!deleteVideoInstance) {
     throw new ApiError(400, "Video does not exits");
@@ -194,13 +209,8 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   if (!videoId) {
     throw new ApiError(401, "Video id is required");
   }
+  await isUserAuthorized(videoId, req.user?._id);
   const videoDetails = await Video.findById(videoId);
-  console.log(req.user?._id);
-  console.log(videoDetails.owner, Video.owner);
-
-  if (req.user?._id.toString() !== videoDetails.owner.toString()) {
-    throw new ApiError(401, "Unauthorized request by user");
-  }
   const isPublished = !videoDetails.isPublished;
   const toggledVideo = await Video.findByIdAndUpdate(videoId, {
     $set: {
