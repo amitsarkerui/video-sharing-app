@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const isUserAuthorized = async (videoId, userId) => {
-  // console.log("isAuthorized Hitting");
+  console.log("isAuthorized Hitting");
   if (!videoId) {
     throw new ApiError(401, "Video Id is required");
   }
