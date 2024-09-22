@@ -32,7 +32,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     });
     message = "User successfully subscribed to this channel";
   }
-  res.status(200).json(new ApiResponse(200, {}, message));
+  return res.status(200).json(new ApiResponse(200, {}, message));
 });
 const getChannelSubscriberList = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
@@ -50,7 +50,7 @@ const getChannelSubscriberList = asyncHandler(async (req, res) => {
     .exec();
 
   console.log(channelSubscribersList);
-  res
+  return res
     .status(200)
     .json(
       new ApiResponse(
@@ -60,5 +60,33 @@ const getChannelSubscriberList = asyncHandler(async (req, res) => {
       )
     );
 });
-
-export { toggleSubscription, getChannelSubscriberList };
+const getSubscribedChannelList = asyncHandler(async (req, res) => {
+  const { subscriberId } = req.params;
+  // console.log(subscriberId);
+  if (!mongoose.isValidObjectId(subscriberId)) {
+    throw new ApiError(400, "Invalid Subscriber ID");
+  }
+  const isSubscriber = await User.findById(subscriberId);
+  if (!isSubscriber) {
+    throw new ApiError(401, "Subscriber doesn't exists");
+  }
+  const subscribedChannel = await Subscription.find({
+    subscriber: subscriberId,
+  })
+    .populate("channel", "fullName username avatar")
+    .exec();
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        subscribedChannel,
+        "Subscribed Channel list fetched successfully"
+      )
+    );
+});
+export {
+  toggleSubscription,
+  getChannelSubscriberList,
+  getSubscribedChannelList,
+};
