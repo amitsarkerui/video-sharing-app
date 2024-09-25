@@ -3,6 +3,8 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
   addVideoToPlayList,
   createPlaylist,
+  getPlaylistById,
+  getUserPlayList,
 } from "../controllers/playlist.controller.js";
 
 const router = Router();
@@ -10,5 +12,7 @@ router.use(verifyJWT);
 
 router.route("/").post(createPlaylist);
 router.route("/add/:videoId/:playlistId").patch(addVideoToPlayList);
+router.route("/user/:userId").get(getUserPlayList);
+router.route("/:playlistId").get(getPlaylistById);
 
 export default router;
