@@ -111,10 +111,50 @@ const deletePlaylistById = asyncHandler(async (req, res) => {
       new ApiResponse(200, deleteInstance, "Playlist deleted successfully")
     );
 });
+const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
+  const { playlistId, videoId } = req.params;
+  if (!isValidObjectId(playlistId)) {
+    throw new ApiError(400, "Invalid PlaylistId");
+  }
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+  const playlist = await Playlist.findById(playlistId);
+  if (playlist === null) {
+    throw new ApiError(401, "Playlist does not exists");
+  }
+  const isVideoInList = playlist.videos.includes(videoId);
+  if (!isVideoInList) {
+    throw new ApiError(400, "Video does not exists in the playlist");
+  }
+  const updateVideosList = playlist.videos.filter(
+    (video) => video.toString() !== videoId
+  );
+  // console.log(updateVideosList);
+  const updatedPlaylist = await Playlist.findByIdAndUpdate(
+    playlist,
+    {
+      $set: {
+        videos: updateVideosList,
+      },
+    },
+    { new: true }
+  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedPlaylist,
+        "Video remove successfully from playlist"
+      )
+    );
+});
 export {
   createPlaylist,
   addVideoToPlayList,
   getUserPlayList,
   getPlaylistById,
   deletePlaylistById,
+  removeVideoFromPlaylist,
 };
