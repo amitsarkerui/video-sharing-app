@@ -5,6 +5,22 @@ import { Playlist } from "../models/playlist.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 
+const isAuthUser = async (playlistId, userId) => {
+  // console.log("is Auth user hitting");
+  if (!isValidObjectId(playlistId) && !isValidObjectId(userId)) {
+    throw new ApiError(400, "Either playlist Id or User Id is invalid");
+  }
+  const playlist = await Playlist.findById(playlistId);
+  const checkUser = await User.findById(userId);
+  if (!checkUser) {
+    throw new ApiError(400, "User does not exists");
+  }
+  const isValidUser = playlist?.owner.toString() === userId.toString();
+  if (!isValidUser) {
+    throw new ApiError(400, "Unauthorized user to performs the operations");
+  }
+  return true;
+};
 const createPlaylist = asyncHandler(async (req, res) => {
   //   console.log("Playlist is hitting");
   const { name, description, videoId } = req.body;
@@ -32,6 +48,7 @@ const addVideoToPlayList = asyncHandler(async (req, res) => {
   if (!isValidObjectId(videoId) && !isValidObjectId(playlistId)) {
     throw new ApiError(401, "Invalid video or playlist ID");
   }
+  await isAuthUser(playlistId, req.user?._id);
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     throw new ApiError(401, "Playlist doesn't exist's");
@@ -100,6 +117,7 @@ const deletePlaylistById = asyncHandler(async (req, res) => {
   if (!isValidObjectId(playlistId)) {
     throw new ApiError(400, "Invalid Playlist id");
   }
+  await isAuthUser(playlistId, req.user?._id);
   const isPlaylistExists = await Playlist.findById(playlistId);
   if (!isPlaylistExists) {
     throw new ApiError(400, "Playlist does not exists");
@@ -119,6 +137,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, "Invalid Video Id");
   }
+  await isAuthUser(playlistId, req.user?._id);
   const playlist = await Playlist.findById(playlistId);
   if (playlist === null) {
     throw new ApiError(401, "Playlist does not exists");
