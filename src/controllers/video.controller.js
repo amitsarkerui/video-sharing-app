@@ -52,7 +52,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     );
 });
 const getAllVideos = asyncHandler(async (req, res) => {
-  console.log("Get all videos is hitting");
+  // console.log("Get all videos is hitting");
   const { page = 1, limit = 20, query, sortBy, sortType, userId } = req.query;
 
   const options = {
@@ -72,7 +72,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
     ],
   };
-  console.log("options", options);
+  // console.log("options", options);
   if (query) {
     searchCondition.$and.push({
       $or: [
@@ -84,7 +84,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
   if (userId) {
     searchCondition.$and.push({ owner: new mongoose.Types.ObjectId(userId) });
   }
-  console.log("searchCondition", searchCondition);
+  // console.log("searchCondition", searchCondition);
   const videoAggregate = Video.aggregate([
     {
       $match: searchCondition,
@@ -114,9 +114,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  console.log("videoAggregate", videoAggregate);
+  // console.log("videoAggregate", videoAggregate);
   const fetchedVideos = await Video.aggregatePaginate(videoAggregate, options);
-  console.log("fetchedVideos", fetchedVideos);
   return res
     .status(200)
     .json(new ApiResponse(200, fetchedVideos, "Video fetched Successfully"));
