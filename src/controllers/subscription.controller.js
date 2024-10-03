@@ -6,10 +6,10 @@ import { Subscription } from "../models/subscription.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 const toggleSubscription = asyncHandler(async (req, res) => {
-  console.log("toggle is hitting");
+  // console.log("toggle is hitting");
   const { channelId } = req.params;
   const userId = req.user?._id || null;
-  console.log(channelId, userId);
+  // console.log(channelId, userId);
   if (!mongoose.isValidObjectId(channelId)) {
     throw new ApiError(401, "Invalid Channel Id");
   }
