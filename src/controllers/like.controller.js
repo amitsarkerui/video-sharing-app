@@ -60,5 +60,29 @@ const getVideoLikes = asyncHandler(async (req, res) => {
       )
     );
 });
+const toggleCommentLike = asyncHandler(async (req, res) => {
+  const { commentId } = req.body;
+  const { videoId } = req.params;
+  if (!(isValidObjectId(commentId) && isValidObjectId(videoId))) {
+    throw new ApiError(400, "Invalid video or comment id");
+  }
+  let message;
+  const existsLikes = await Like.findOne({
+    comment: commentId,
+    likedBy: req.user?._id,
+  });
+  if (existsLikes) {
+    await Like.findByIdAndDelete(existsLikes?._id);
+    message = "Comment Unlike Successfully";
+  } else {
+    await Like.create({
+      video: videoId,
+      likedBy: req.user?._id,
+      comment: commentId,
+    });
+    message = "Comment like successfully";
+  }
+  return res.status(200).json(new ApiResponse(200, {}, message));
+});
 
-export { toggleVideoLike, getVideoLikes };
+export { toggleVideoLike, getVideoLikes, toggleCommentLike };
