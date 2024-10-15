@@ -84,5 +84,38 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   }
   return res.status(200).json(new ApiResponse(200, {}, message));
 });
-
-export { toggleVideoLike, getVideoLikes, toggleCommentLike };
+const getCommentLikeCount = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  if (!isValidObjectId(commentId)) {
+    throw new ApiError(401, "Invalid Comment Id");
+  }
+  const commentIdInstance = await Like.find({ comment: commentId });
+  if (commentIdInstance.length === 0) {
+    const likesCount = 0;
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          likesCount,
+          "Comment likes count fetched successfully"
+        )
+      );
+  }
+  const likesCount = commentIdInstance.length;
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        likesCount,
+        "Comment likes count fetched successfully"
+      )
+    );
+});
+export {
+  toggleVideoLike,
+  getVideoLikes,
+  toggleCommentLike,
+  getCommentLikeCount,
+};
